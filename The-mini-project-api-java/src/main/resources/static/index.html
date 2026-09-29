@@ -1,10 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Hello</title>
+    <title>Web Security Lab — CRUD</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; background: #f8fafc; color: #1e293b; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { padding: 8px 12px; margin-right: 8px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; background: #2563eb; color: white; font-weight: 500; }
+        button.delete { background: #dc2626; }
+        button.edit { background: #d97706; margin-right: 6px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; }
+    </style>
 </head>
 <body>
-    <h1>Hello world</h1>
+
+<h1>Управління об'єктами (CRUD)</h1>
+
+<div class="card">
+    <h3 id="formTitle">Додати новий об'єкт</h3>
+    <input type="hidden" id="itemId">
+    <input type="text" id="name" placeholder="Назва" required>
+    <input type="text" id="description" placeholder="Опис" required>
+    <input type="text" id="category" placeholder="Категорія" required>
+    <button onclick="saveItem()" id="saveBtn">Додати</button>
+    <button onclick="resetForm()" id="cancelBtn" style="display:none; background:#64748b;">Скасувати</button>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Назва</th>
+        <th>Опис</th>
+        <th>Категорія</th>
+        <th>Дії</th>
+    </tr>
+    </thead>
+    <tbody id="itemsTable"></tbody>
+</table>
+
+<script>
+    const API_URL = '/api/items';
+
+    async function loadItems() {
+        const res = await fetch(API_URL);
+        const items = await res.json();
+        const tbody = document.getElementById('itemsTable');
+        tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.description}</td>
+                    <td>${item.category}</td>
+                    <td>
+                        <button class="edit" onclick='startEdit(${JSON.stringify(item)})'>Редагувати</button>
+                        <button class="delete" onclick="deleteItem(${item.id})">Видалити</button>
+                    </td>
+                </tr>
+            `).join('');
+    }
+
+    async function saveItem() {
+        const id = document.getElementById('itemId').value;
+        const payload = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            category: document.getElementById('category').value
+        };
+
+        if (id) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+        resetForm();
+        loadItems();
+    }
+
+    function startEdit(item) {
+        document.getElementById('formTitle').innerText = `Редагування об'єкта #${item.id}`;
+        document.getElementById('itemId').value = item.id;
+        document.getElementById('name').value = item.name;
+        document.getElementById('description').value = item.description;
+        document.getElementById('category').value = item.category;
+        document.getElementById('saveBtn').innerText = 'Оновити';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+    }
+
+    function resetForm() {
+        document.getElementById('formTitle').innerText = 'Додати новий об\'єкт';
+        document.getElementById('itemId').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('saveBtn').innerText = 'Додати';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    async function deleteItem(id) {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        loadItems();
+    }
+
+    loadItems();
+</script>
 </body>
 </html>
