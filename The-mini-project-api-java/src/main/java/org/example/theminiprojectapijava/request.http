@@ -1,0 +1,64 @@
+### 1. Успішний GET всіх об'єктів (з авторизацією)
+GET http://localhost:8080/api/items
+Authorization: Basic admin password
+
+### 2. Неуспішний GET (без авторизації, має повернути 401 Unauthorized)
+GET http://localhost:8080/api/items
+
+### 3. Успішний GET одного об'єкта
+GET http://localhost:8080/api/items/1
+Authorization: Basic admin password
+
+### 4. Неуспішний GET одного об'єкта (з неправильним паролем, має повернути 401)
+GET http://localhost:8080/api/items/1
+Authorization: Basic admin wrongpassword
+
+### 5. Успішний POST (створення нового об'єкта)
+POST http://localhost:8080/api/items
+Authorization: Basic admin password
+Content-Type: application/json
+
+{
+  "name": "Test Security",
+  "description": "Testing basic auth",
+  "category": "Security"
+}
+
+### 6. Неуспішний POST (без авторизації)
+POST http://localhost:8080/api/items
+Content-Type: application/json
+
+{
+  "name": "Hacker Attempt",
+  "description": "Will fail",
+  "category": "Attack"
+}
+
+### 7. Успішний PUT (оновлення об'єкта)
+PUT http://localhost:8080/api/items/1
+Authorization: Basic admin password
+Content-Type: application/json
+
+{
+  "name": "Updated Audit",
+  "description": "Updated through Basic Auth",
+  "category": "Security"
+}
+
+### 8. Неуспішний PUT (оновлення неіснуючого об'єкта, має повернути 404)
+PUT http://localhost:8080/api/items/999
+Authorization: Basic admin password
+Content-Type: application/json
+
+{
+  "name": "Ghost Item",
+  "description": "Does not exist",
+  "category": "None"
+}
+
+### 9. Успішний DELETE (видалення об'єкта)
+DELETE http://localhost:8080/api/items/2
+Authorization: Basic admin password
+
+### 10. Неуспішний DELETE (видалення без авторизації)
+DELETE http://localhost:8080/api/items/3
