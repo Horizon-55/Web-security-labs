@@ -1,0 +1,126 @@
+### 1. ADMIN читає всі об'єкти (Успіх - 200)
+GET http://localhost:8080/api/items
+Authorization: Basic admin admin123
+
+> {%
+    client.test("Admin can read items", function() {
+        client.assert(response.status === 200, "Expected 200 OK");
+    });
+%}
+
+### 2. USER читає всі об'єкти (Успіх - 200)
+GET http://localhost:8080/api/items
+Authorization: Basic user user123
+
+> {%
+    client.test("User can read items", function() {
+        client.assert(response.status === 200, "Expected 200 OK");
+    });
+%}
+
+### 3. MANAGER створює об'єкт (Успіх - 201)
+POST http://localhost:8080/api/items
+Authorization: Basic manager manager123
+Content-Type: application/json
+
+{
+  "name": "Manager Item",
+  "description": "Created by manager",
+  "category": "Test"
+}
+
+> {%
+    client.test("Manager can create items", function() {
+        client.assert(response.status === 201, "Expected 201 Created");
+    });
+%}
+
+### 4. USER намагається створити об'єкт (Відмова - 403 Forbidden)
+POST http://localhost:8080/api/items
+Authorization: Basic user user123
+Content-Type: application/json
+
+{
+  "name": "Hacker Item",
+  "description": "Should fail",
+  "category": "Test"
+}
+
+> {%
+    client.test("User CANNOT create items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden");
+    });
+%}
+
+### 5. MANAGER оновлює об'єкт (Успіх - 200)
+PUT http://localhost:8080/api/items/1
+Authorization: Basic manager manager123
+Content-Type: application/json
+
+{
+  "name": "Updated by Manager",
+  "description": "Valid update",
+  "category": "Test"
+}
+
+> {%
+    client.test("Manager can update items", function() {
+        client.assert(response.status === 200, "Expected 200 OK");
+    });
+%}
+
+### 6. USER намагається оновити об'єкт (Відмова - 403 Forbidden)
+PUT http://localhost:8080/api/items/1
+Authorization: Basic user user123
+Content-Type: application/json
+
+{
+  "name": "Hacker Update",
+  "description": "Should fail",
+  "category": "Test"
+}
+
+> {%
+    client.test("User CANNOT update items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden");
+    });
+%}
+
+### 7. MANAGER намагається видалити об'єкт (Відмова - 403 Forbidden)
+DELETE http://localhost:8080/api/items/1
+Authorization: Basic manager manager123
+
+> {%
+    client.test("Manager CANNOT delete items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden");
+    });
+%}
+
+### 8. USER намагається видалити об'єкт (Відмова - 403 Forbidden)
+DELETE http://localhost:8080/api/items/1
+Authorization: Basic user user123
+
+> {%
+    client.test("User CANNOT delete items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden");
+    });
+%}
+
+### 9. ADMIN видаляє об'єкт (Успіх - 204 No Content)
+DELETE http://localhost:8080/api/items/2
+Authorization: Basic admin admin123
+
+> {%
+    client.test("Admin can delete items", function() {
+        client.assert(response.status === 204, "Expected 204 No Content");
+    });
+%}
+
+### 10. Запит без авторизації (Відмова - 401 Unauthorized)
+GET http://localhost:8080/api/items
+
+> {%
+    client.test("Unauthenticated request blocked", function() {
+        client.assert(response.status === 401, "Expected 401 Unauthorized");
+    });
+%}
