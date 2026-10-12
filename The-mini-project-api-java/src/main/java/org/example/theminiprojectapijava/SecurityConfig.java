@@ -2,8 +2,8 @@ package org.example.theminiprojectapijava;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -14,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -21,13 +22,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // GET доступний всім авторизованим ролям
-                        .requestMatchers(HttpMethod.GET, "/api/items/**").hasAnyRole("ADMIN", "MANAGER", "USER")
-                        // POST і PUT доступні тільки для ADMIN та MANAGER
-                        .requestMatchers(HttpMethod.POST, "/api/items/**").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/api/items/**").hasAnyRole("ADMIN", "MANAGER")
-                        // DELETE доступний ВИКЛЮЧНО для ADMIN
-                        .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
+                        // Дозволяємо доступ до статичних ресурсів (якщо є фронтенд)
+                        .requestMatchers("/", "/index.html", "/static/**").permitAll()
+                        // Всі запити до /api/items/** вимагають автентифікації.
+                        // Детальний контроль доступу за ролями (RBAC) здійснюється анотаціями @PreAuthorize на методах контролера.
+                        .requestMatchers("/api/items/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

@@ -1,0 +1,160 @@
+### ==============================================================================
+### ЛАБОРАТОРНА РОБОТА №6: Method-Level Security (@PreAuthorize)
+### 10 запитів для різних користувачів (1 запит = 0.5 бали, разом = 5.0 балів)
+### Користувачі:
+### - admin:admin123     -> ROLE_ADMIN   (Повний доступ, включаючи batch та delete)
+### - manager:manager123 -> ROLE_MANAGER (Читання, створення одиночних, оновлення)
+### - user:user123       -> ROLE_USER    (Тільки читання)
+### ==============================================================================
+
+### [Запит 1 / 0.5 бали] USER успішно читає список усіх об'єктів (200 OK)
+GET http://localhost:8080/api/items
+Authorization: Basic user user123
+Accept: application/json
+
+> {%
+    client.test("1. USER can read all items", function() {
+        client.assert(response.status === 200, "Expected 200 OK, got: " + response.status);
+    });
+%}
+
+### [Запит 2 / 0.5 бали] MANAGER успішно читає один об'єкт за ID (200 OK)
+GET http://localhost:8080/api/items/1
+Authorization: Basic manager manager123
+Accept: application/json
+
+> {%
+    client.test("2. MANAGER can read item by ID", function() {
+        client.assert(response.status === 200, "Expected 200 OK, got: " + response.status);
+    });
+%}
+
+### [Запит 3 / 0.5 бали] ADMIN успішно читає один об'єкт за ID (200 OK)
+GET http://localhost:8080/api/items/2
+Authorization: Basic admin admin123
+Accept: application/json
+
+> {%
+    client.test("3. ADMIN can read item by ID", function() {
+        client.assert(response.status === 200, "Expected 200 OK, got: " + response.status);
+    });
+%}
+
+### [Запит 4 / 0.5 бали] MANAGER успішно створює новий об'єкт (201 Created)
+POST http://localhost:8080/api/items
+Authorization: Basic manager manager123
+Content-Type: application/json
+
+{
+  "name": "Lab 6 Security Review",
+  "description": "Created by MANAGER via @PreAuthorize route",
+  "category": "MethodSecurity"
+}
+
+> {%
+    client.test("4. MANAGER can create single item", function() {
+        client.assert(response.status === 201, "Expected 201 Created, got: " + response.status);
+    });
+%}
+
+### [Запит 5 / 0.5 бали] USER намагається створити об'єкт -> Відмова доступу (403 Forbidden)
+POST http://localhost:8080/api/items
+Authorization: Basic user user123
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Item",
+  "description": "User is not allowed to create",
+  "category": "Exploit"
+}
+
+> {%
+    client.test("5. USER is forbidden from creating items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden, got: " + response.status);
+    });
+%}
+
+### [Запит 6 / 0.5 бали] MANAGER намагається створити пакет об'єктів (batch) -> Відмова доступу (403 Forbidden)
+POST http://localhost:8080/api/items/batch
+Authorization: Basic manager manager123
+Content-Type: application/json
+
+[
+  {
+    "name": "Manager Batch 1",
+    "description": "Batch should fail for manager",
+    "category": "Security"
+  },
+  {
+    "name": "Manager Batch 2",
+    "description": "Batch should fail for manager",
+    "category": "Security"
+  }
+]
+
+> {%
+    client.test("6. MANAGER is forbidden from batch creation", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden, got: " + response.status);
+    });
+%}
+
+### [Запит 7 / 0.5 бали] ADMIN створює пакет об'єктів (batch) -> Успіх (201 Created)
+POST http://localhost:8080/api/items/batch
+Authorization: Basic admin admin123
+Content-Type: application/json
+
+[
+  {
+    "name": "Admin Batch Item 1",
+    "description": "Created by ADMIN with @PreAuthorize('hasRole(ADMIN)')",
+    "category": "Infrastructure"
+  },
+  {
+    "name": "Admin Batch Item 2",
+    "description": "Batch operation allowed exclusively for ADMIN",
+    "category": "Infrastructure"
+  }
+]
+
+> {%
+    client.test("7. ADMIN can create batch items", function() {
+        client.assert(response.status === 201, "Expected 201 Created, got: " + response.status);
+    });
+%}
+
+### [Запит 8 / 0.5 бали] USER намагається оновити об'єкт -> Відмова доступу (403 Forbidden)
+PUT http://localhost:8080/api/items/1
+Authorization: Basic user user123
+Content-Type: application/json
+
+{
+  "name": "Tampered Item",
+  "description": "User attempts to overwrite item",
+  "category": "Hacking"
+}
+
+> {%
+    client.test("8. USER is forbidden from updating items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden, got: " + response.status);
+    });
+%}
+
+### [Запит 9 / 0.5 бали] MANAGER намагається видалити об'єкт -> Відмова доступу (403 Forbidden)
+DELETE http://localhost:8080/api/items/1
+Authorization: Basic manager manager123
+
+> {%
+    client.test("9. MANAGER is forbidden from deleting items", function() {
+        client.assert(response.status === 403, "Expected 403 Forbidden, got: " + response.status);
+    });
+%}
+
+### [Запит 10 / 0.5 бали] ADMIN видаляє об'єкт за ID -> Успіх (204 No Content)
+DELETE http://localhost:8080/api/items/2
+Authorization: Basic admin admin123
+
+> {%
+    client.test("10. ADMIN can delete item", function() {
+        client.assert(response.status === 204, "Expected 204 No Content, got: " + response.status);
+    });
+%}
