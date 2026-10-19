@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Node.js / pnpm (необхідно для pnpm cache та store) ###
+node_modules/
+pnpm-lock.yaml
+.pnpm-store/
+.pnpm/
+
